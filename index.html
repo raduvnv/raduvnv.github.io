@@ -178,7 +178,7 @@ async function playBoot() {
     appendLine(`<span class="${cls}">${line.t}</span>`);
   }
   await new Promise(r => setTimeout(r, 400));
-  appendLine(`<span class="dim">typ het woord dat je hoorde onder de grond<span class="cursor"></span></span>`);
+  appendLine(`<span class="dim">typ het woord dat je eerder hoorde<span class="cursor"></span></span>`);
   gate.classList.add("show");
   pwInput.focus();
 }
