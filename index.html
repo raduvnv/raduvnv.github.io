@@ -154,6 +154,34 @@ ZGUgdHJhcGRldXIgd2FjaHQuIGRpdCB3YXMgaGV0IGhlbGUgcGFkLCBuaWV0IGVlbiBkZWVsIGVydmFu
     font-size: 15px;
     letter-spacing: 1px;
   }
+
+  #hidden-btn {
+    position: fixed;
+    right: 14px;
+    bottom: 12px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #08050a;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 5;
+  }
+  #hidden-btn:hover { background: var(--amber-faint); }
+  #hidden-msg {
+    position: fixed;
+    right: 14px;
+    bottom: 30px;
+    max-width: 260px;
+    font-size: 12px;
+    color: var(--red);
+    text-align: right;
+    opacity: 0;
+    transition: opacity 1s ease;
+    z-index: 5;
+  }
+  #hidden-msg.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -167,6 +195,8 @@ ZGUgdHJhcGRldXIgd2FjaHQuIGRpdCB3YXMgaGV0IGhlbGUgcGFkLCBuaWV0IGVlbiBkZWVsIGVydmFu
   <div id="denied"></div>
   <div id="reveal"></div>
 </div>
+<button id="hidden-btn" aria-label=""></button>
+<div id="hidden-msg"></div>
 
 <script>
 const bootLines = [
@@ -203,7 +233,7 @@ async function playBoot() {
     appendLine(`<span class="${cls}">${line.t}</span>`);
   }
   await new Promise(r => setTimeout(r, 400));
-  appendLine(`<span class="dim">typ het woord dat je eerder hoorde<span class="cursor"></span></span>`);
+  appendLine(`<span class="dim">typ het woord dat je hoorde onder de grond<span class="cursor"></span></span>`);
   gate.classList.add("show");
   pwInput.focus();
 }
@@ -228,25 +258,46 @@ pwInput.addEventListener("keydown", (e) => {
   }
 });
 
-function unlock() {
+const revealLines = [
+  { t: "toegang verleend", dim: true, delay: 300 },
+  { t: "", delay: 500 },
+  { t: "het zit niet alleen bij mij.", delay: 900 },
+  { t: "het zat hier al, onder ons allebei,", delay: 900 },
+  { t: "lang voordat een van ons het merkte.", delay: 1100 },
+  { t: "", delay: 600 },
+  { t: "volg het terug. je weet al waar het eindigt —", delay: 900 },
+  { t: "bij de deur die je al bent gepasseerd.", delay: 1200 },
+  { t: "", delay: 700 },
+  { t: "als je dit leest, is het al te laat.", warn: true, delay: 900 },
+  { t: "ga op zoek naar een tweede laag.", warn: true, delay: 1200 },
+  { t: "", delay: 800 },
+  { t: "&lt;!-- er zit meer verborgen dan dit scherm toont --&gt;", dim: true, delay: 1300 },
+  { t: "", delay: 800 },
+  { t: "[verbinding verbroken]", dim: true, delay: 700 },
+];
+
+async function unlock() {
   gate.remove();
   denied.remove();
   reveal.classList.add("show");
-  reveal.innerHTML =
-`<span class="quiet">toegang verleend</span>
-
-het zit niet alleen bij mij.
-het zat hier al, onder ons allebei,
-lang voordat een van ons het merkte.
-
-volg het terug. je weet al waar het eindigt 
-bij de deur die je al bent gepasseerd.
-
-<span class="warn">als je dit leest, is het al te laat.
-ga op zoek naar een tweede laag.</span>
-
-<span class="quiet">[verbinding verbroken]</span>`;
+  for (const line of revealLines) {
+    await new Promise(r => setTimeout(r, line.delay));
+    const cls = line.warn ? "warn" : (line.dim ? "dim" : "");
+    const div = document.createElement("div");
+    div.innerHTML = `<span class="${cls}">${line.t || "&nbsp;"}</span>`;
+    reveal.appendChild(div);
+  }
 }
+
+const hiddenBtn = document.getElementById("hidden-btn");
+const hiddenMsg = document.getElementById("hidden-msg");
+let hiddenFound = false;
+hiddenBtn.addEventListener("click", () => {
+  if (hiddenFound) return;
+  hiddenFound = true;
+  hiddenMsg.textContent = "je hebt de knop gevonden. er is er nog een — achter een kist.";
+  hiddenMsg.classList.add("show");
+});
 
 const startOverlay = document.getElementById("start");
 const ambient = new Audio("ambient.mp3");
