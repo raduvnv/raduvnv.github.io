@@ -1,3 +1,6 @@
+<!--
+ZGUgdHJhcGRldXIgd2FjaHQuIGRpdCB3YXMgaGV0IGhlbGUgcGFkLCBuaWV0IGVlbiBkZWVsIGVydmFuLg==
+-->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -130,9 +133,31 @@
     #crt { padding: 20px; min-height: 380px; }
     #log, #reveal { font-size: 13.5px; }
   }
+
+  #start {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    cursor: pointer;
+  }
+  #start.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1.2s ease;
+  }
+  #start span {
+    color: var(--amber-dim);
+    font-size: 15px;
+    letter-spacing: 1px;
+  }
 </style>
 </head>
 <body>
+<div id="start"><span>[ klik om verbinding te starten ]<span class="cursor"></span></span></div>
 <div id="crt">
   <div id="log"></div>
   <div id="gate">
@@ -178,7 +203,7 @@ async function playBoot() {
     appendLine(`<span class="${cls}">${line.t}</span>`);
   }
   await new Promise(r => setTimeout(r, 400));
-  appendLine(`<span class="dim">typ het woord dat je eerder hoorde<span class="cursor"></span></span>`);
+  appendLine(`<span class="dim">typ het woord dat je hoorde onder de grond<span class="cursor"></span></span>`);
   gate.classList.add("show");
   pwInput.focus();
 }
@@ -214,7 +239,7 @@ het zit niet alleen bij mij.
 het zat hier al, onder ons allebei,
 lang voordat een van ons het merkte.
 
-volg het terug. je weet al waar het eindigt
+volg het terug. je weet al waar het eindigt 
 bij de deur die je al bent gepasseerd.
 
 <span class="warn">als je dit leest, is het al te laat.
@@ -223,7 +248,23 @@ ga op zoek naar een tweede laag.</span>
 <span class="quiet">[verbinding verbroken]</span>`;
 }
 
-playBoot();
+const startOverlay = document.getElementById("start");
+const ambient = new Audio("ambient.mp3");
+ambient.loop = true;
+ambient.volume = 0;
+
+startOverlay.addEventListener("click", () => {
+  startOverlay.classList.add("hidden");
+  ambient.play().catch(() => {});
+  let vol = 0;
+  const target = 0.35;
+  const rampId = setInterval(() => {
+    vol = Math.min(target, vol + 0.02);
+    ambient.volume = vol;
+    if (vol >= target) clearInterval(rampId);
+  }, 100);
+  playBoot();
+}, { once: true });
 </script>
 </body>
 </html>
