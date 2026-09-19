@@ -1,1 +1,226 @@
-# raduvnv.github.io
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>&nbsp;</title>
+<style>
+  :root {
+    --bg: #060402;
+    --amber: #ffb347;
+    --amber-dim: #a3712a;
+    --amber-faint: #5c4319;
+    --red: #ff4d2e;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--amber);
+    font-family: "Courier New", Courier, monospace;
+    height: 100%;
+    overflow: hidden;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  #crt {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    background: #0a0603;
+    border: 1px solid var(--amber-faint);
+    border-radius: 4px;
+    padding: 28px 30px;
+    box-shadow: 0 0 40px rgba(255,140,40,0.08), inset 0 0 60px rgba(0,0,0,0.6);
+    min-height: 420px;
+  }
+  #crt::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.03) 0px,
+      rgba(255,255,255,0.03) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode: overlay;
+    border-radius: 4px;
+  }
+  #crt::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 120px rgba(0,0,0,0.7);
+    border-radius: 4px;
+  }
+  #log {
+    white-space: pre-wrap;
+    font-size: 15px;
+    line-height: 1.55;
+    min-height: 220px;
+  }
+  #log .dim { color: var(--amber-dim); }
+  #log .warn { color: var(--red); }
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--amber);
+    animation: blink 1s steps(1) infinite;
+    vertical-align: -2px;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  #gate {
+    margin-top: 18px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  #gate.show { display: flex; }
+  #gate .prompt { color: var(--amber); font-size: 15px; }
+  #gate input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--amber-faint);
+    color: var(--amber);
+    font-family: inherit;
+    font-size: 15px;
+    outline: none;
+    padding: 2px 4px;
+    letter-spacing: 1px;
+  }
+  #denied {
+    color: var(--red);
+    font-size: 13px;
+    margin-top: 10px;
+    min-height: 16px;
+    opacity: 0;
+  }
+  #denied.show {
+    opacity: 1;
+    animation: shake 0.35s;
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+
+  #reveal {
+    display: none;
+    margin-top: 6px;
+    white-space: pre-wrap;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--amber);
+  }
+  #reveal.show { display: block; }
+  #reveal .quiet { color: var(--amber-dim); font-size: 13px; }
+
+  @media (max-width: 480px) {
+    #crt { padding: 20px; min-height: 380px; }
+    #log, #reveal { font-size: 13.5px; }
+  }
+</style>
+</head>
+<body>
+<div id="crt">
+  <div id="log"></div>
+  <div id="gate">
+    <span class="prompt">&gt;</span>
+    <input type="text" id="pw" autocomplete="off" spellcheck="false" autofocus>
+  </div>
+  <div id="denied"></div>
+  <div id="reveal"></div>
+</div>
+
+<script>
+const bootLines = [
+  { t: "verbinding zoeken", dim: true, delay: 40 },
+  { t: "verbinding zoeken.", dim: true, delay: 300 },
+  { t: "verbinding zoeken..", dim: true, delay: 300 },
+  { t: "verbinding zoeken...", dim: true, delay: 300 },
+  { t: "signaal gevonden onder maurice's huis", delay: 700 },
+  { t: "diepte: onbekend", dim: true, delay: 500 },
+  { t: "oorsprong: hetzelfde als wat jij al kent", delay: 900 },
+  { t: "", delay: 400 },
+  { t: "dit is niet begonnen bij jou.", delay: 800 },
+  { t: "het was er al, en het groeit nog steeds.", delay: 1000 },
+  { t: "", delay: 500 },
+  { t: "WAARSCHUWING: toegang vereist bevestiging", warn: true, delay: 700 },
+];
+
+const log = document.getElementById("log");
+const gate = document.getElementById("gate");
+const pwInput = document.getElementById("pw");
+const denied = document.getElementById("denied");
+const reveal = document.getElementById("reveal");
+
+function appendLine(html) {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  log.appendChild(div);
+}
+
+async function playBoot() {
+  for (const line of bootLines) {
+    await new Promise(r => setTimeout(r, line.delay));
+    const cls = line.warn ? "warn" : (line.dim ? "dim" : "");
+    appendLine(`<span class="${cls}">${line.t}</span>`);
+  }
+  await new Promise(r => setTimeout(r, 400));
+  appendLine(`<span class="dim">typ het woord dat je hoorde onder de grond<span class="cursor"></span></span>`);
+  gate.classList.add("show");
+  pwInput.focus();
+}
+
+let attempts = 0;
+const ANSWER = "under";
+
+pwInput.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  const val = pwInput.value.trim().toLowerCase();
+  if (val === ANSWER || val === "onder") {
+    unlock();
+  } else {
+    attempts++;
+    denied.textContent = attempts < 3
+      ? "TOEGANG GEWEIGERD"
+      : "TOEGANG GEWEIGERD — luister nog eens";
+    denied.classList.remove("show");
+    void denied.offsetWidth;
+    denied.classList.add("show");
+    pwInput.value = "";
+  }
+});
+
+function unlock() {
+  gate.remove();
+  denied.remove();
+  reveal.classList.add("show");
+  reveal.innerHTML =
+`<span class="quiet">toegang verleend</span>
+
+het zit niet alleen bij mij.
+het zat hier al, onder ons allebei,
+lang voordat een van ons het merkte.
+
+volg het terug. je weet al waar het eindigt —
+bij de deur die je al bent gepasseerd.
+
+<span class="quiet">[verbinding verbroken]</span>`;
+}
+
+playBoot();
+</script>
+</body>
+</html>
